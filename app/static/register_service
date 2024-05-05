@@ -1,0 +1,9 @@
+{
+    "name":"Network Scanner",
+    "description":"Scans the network for other devices",
+    "icon":"mdi-clock-fast",
+    "company":"Blue Robotics",
+    "version":"1.0.0",
+    "webpage":"https://github.com/Williangalvani/BlueOS-extension-network-scanner",
+    "api":""
+ }
