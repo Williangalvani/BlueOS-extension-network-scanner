@@ -26,7 +26,7 @@ LABEL company='{\
         "email": "support@bluerobotics.com"\
     }'
 LABEL type="tool"
-LABEL readme='https://raw.githubusercontent.com/Williangalvani/BlueOS-extension-network-scanner/{tag}/example4-vue-backend/Readme.md'
+LABEL readme='https://raw.githubusercontent.com/Williangalvani/BlueOS-extension-network-scanner/{tag}/Readme.md'
 LABEL links='{\
         "website": "https://github.com/Williangalvani/BlueOS-extension-network-scanner/",\
         "support": "https://github.com/Williangalvani/BlueOS-extension-network-scanner/"\
