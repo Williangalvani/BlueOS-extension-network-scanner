@@ -10,8 +10,9 @@ COPY app /app
 LABEL version="1.0.0"
 LABEL permissions='\
 {\
+  "NetworkMode": "host",\
   "HostConfig": {\
-    "NetworkMode": "host",\
+    "NetworkMode": "host"\
   }\
 }'
 LABEL authors='[\
