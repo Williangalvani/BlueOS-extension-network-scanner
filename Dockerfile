@@ -4,7 +4,7 @@ RUN apt update && apt install -y nmap && apt clean && rm -rf /var/lib/apt/lists/
 COPY app/setup.py /app/setup.py
 RUN echo "[global]" > /etc/pip.conf
 RUN echo "extra-index-url=https://www.piwheels.org/simple" >> /etc/pip.conf
-RUN cd app && pip install .
+RUN apt update && apt install -y gcc python-dev && cd app && pip install . && apt remove -y gcc python-dev && apt clean -y && rm -rf /var/lib/apt/lists/*
 COPY app /app
 
 LABEL version="1.0.0"
