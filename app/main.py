@@ -16,11 +16,11 @@ import psutil
 import socket
 from fastapi import Response
 import nmap3
+import asyncio
 
 
 class TextData(BaseModel):
     data: str
-
 
 SERVICE_NAME = "BlueosNetworkDiscoveryService"
 # logger.add(get_new_log_path(SERVICE_NAME))
@@ -52,7 +52,7 @@ async def load_interfaces() -> Any:
     interface_info = {"interface": interface}
     status = "up" if statuses[interface].isup else "down"
     interface_info["status"] = status
-    
+
     addresses = []
     # Iterate over addresses for each interface
     for addr in addrs:
@@ -68,37 +68,46 @@ async def load_interfaces() -> Any:
         address_info["type"] = "MAC"
         address_info["address"] = addr.address
       addresses.append(address_info)
-    
+
     interface_info["addresses"] = addresses
     interface_data.append(interface_info)
 
   return Response(content=json.dumps(interface_data), media_type="application/json")
 
+async def run_command(command):
+    process = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+    stdout, stderr = await process.communicate()
+    return stdout.decode().strip()
+
 @app.post("/scan_http", status_code=status.HTTP_200_OK)
 @version(1, 0)
 async def scan_network(ip: str, netmask: str) -> Any:
-  print(ip, netmask)
-  nmap = nmap3.NmapHostDiscovery()
-  # use the netmask to turn the ip into a network address,
-  # for example 192.168.15.1 and 255.255.255.0 will return 192.168.15.* and 255.255.0.0 will return 192.168.*.*
-  network_address = ".".join([str(int(ip_octet) & int(netmask_octet)) if netmask_octet != '0' else '*' for ip_octet, netmask_octet in zip(ip.split("."), netmask.split("."))])
-  print(network_address)
-  results = nmap.nmap_portscan_only(network_address,"--open -p 80")
-  filtered = {host: data for host, data in results.items() if 'state' in data and data['state']['state'] == 'up'}
-  return filtered
+    print(ip, netmask)
+    nmap = nmap3.Nmap()
+    # use the netmask to turn the ip into a network address,
+    # for example 192.168.15.1 and 255.255.255.0 will return 192.168.15.* and 255.255.0.0 will return 192.168.*.*
+    network_address = ".".join([str(int(ip_octet) & int(netmask_octet)) if netmask_octet != '0' else '*' for ip_octet, netmask_octet in zip(ip.split("."), netmask.split("."))])
+    command = f"nmap -Pn -p 80 --open {network_address} -oX -"
+    output = await run_command(command)
+    xml = nmap.get_xml_et(output)
+    results = nmap.parser.filter_top_ports(xml)
+    filtered = {host: data for host, data in results.items() if 'state' in data and data['state']['state'] == 'up'}
+    return filtered
 
 @app.post("/scan", status_code=status.HTTP_200_OK)
 @version(1, 0)
 async def scan_network(ip: str, netmask: str) -> Any:
-  print(ip, netmask)
-  nmap = nmap3.NmapHostDiscovery()
-  # use the netmask to turn the ip into a network address,
-  # for example 192.168.15.1 and 255.255.255.0 will return 192.168.15.* and 255.255.0.0 will return 192.168.*.*
-  network_address = ".".join([str(int(ip_octet) & int(netmask_octet)) if netmask_octet != '0' else '*' for ip_octet, netmask_octet in zip(ip.split("."), netmask.split("."))])
-  print(network_address)
-  results = nmap.nmap_no_portscan(network_address)
-  filtered = {host: data for host, data in results.items() if 'state' in data and data['state']['state'] == 'up'}
-  return filtered
+    print(ip, netmask)
+    nmap = nmap3.Nmap()
+    # use the netmask to turn the ip into a network address,
+    # for example 192.168.15.1 and 255.255.255.0 will return 192.168.15.* and 255.255.0.0 will return 192.168.*.*
+    network_address = ".".join([str(int(ip_octet) & int(netmask_octet)) if netmask_octet != '0' else '*' for ip_octet, netmask_octet in zip(ip.split("."), netmask.split("."))])
+    command = f"nmap -sn {network_address} -oX -"
+    output = await run_command(command)
+    xml = nmap.get_xml_et(output)
+    results = nmap.parser.filter_top_ports(xml)
+    filtered = {host: data for host, data in results.items() if 'state' in data and data['state']['state'] == 'up'}
+    return filtered
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 
