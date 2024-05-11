@@ -106,6 +106,7 @@
 
           }
         }).then(response => {
+          this.is_http = false;
           console.log(response.data);
           Vue.set(this.found_hosts, ip.address, response.data);
         }).finally(() => {
