@@ -15,30 +15,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Get and set credentials variables
-        id: vars
-        run: | 
-          registry_password=$(curl -H "Authorization: Token ${{secrets.PAT}}" https://app.blueos.cloud/api/v1/extensions/registry_credentials/ | jq -r .password)
-          echo "::add-mask::$registry_password"
-          echo "BCLOUD_REGISTRY_PASSWORD=$registry_password" >> $GITHUB_OUTPUT
-      - name: Login in ECR
-        run: | 
-          docker login -u AWS -p ${{ steps.vars.outputs.BCLOUD_REGISTRY_PASSWORD }} 316003453400.dkr.ecr.us-east-1.amazonaws.com
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push image to dockerhub
-        env:
-          ECR_REGISTRY: 316003453400.dkr.ecr.us-east-1.amazonaws.com
-          ECR_REPOSITORY: 0f070a3a-ff63-4278-bd08-cbde5344549d # your repository id
-
-        uses: docker/build-push-action@v5
+      - name: Build and Publish Extension in BlueOS CLoud
+        uses: bluerobotics/blueos-cloud-action@0.0.1
         with:
-          push: true
-          platforms: linux/arm/v7, linux/arm64, linux/amd64
-          tags: |
-            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.ref_name }}
-          provenance: false
+          BCLOUD_PAT: ${{secrets.BCLOUD_PAT}}
+          PLATFORMS: linux/arm/v7,linux/arm64,linux/amd64
+          EXTENSION: 0f070a3a-ff63-4278-bd08-cbde5344549d
